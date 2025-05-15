@@ -46,6 +46,7 @@ async function processWithGemini(text, prompt) {
 
 /**
  * Enhanced JSON parser that handles various problematic characters in Persian/Arabic text
+ * while preserving important characters like ZWNJ (Zero Width Non-Joiner)
  * @param {string} result - The JSON string to parse
  * @returns {Object} Parsed JSON object
  */
@@ -66,10 +67,10 @@ function cleanAndParseJson(result) {
         // Remove all ASCII control characters (0-31) except allowed ones in JSON (\n, \r, \t)
         cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
 
-        // Replace problematic Unicode characters
+        // Replace problematic Unicode characters EXCEPT ZWNJ (U+200C) which is important for Persian
         cleaned = cleaned
-            // Remove zero-width characters and other invisible characters
-            .replace(/[\u200B-\u200F\uFEFF\u061C]/g, '')
+            // Remove zero-width characters and other invisible characters EXCEPT ZWNJ
+            .replace(/[\u200B\u200D-\u200F\uFEFF\u061C]/g, '') // Keeping U+200C (ZWNJ)
             // Replace various types of spaces with standard space
             .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/g, ' ')
             // Replace various types of hyphens and dashes with standard hyphen
@@ -202,8 +203,8 @@ function stripProblemChars(jsonStr) {
     }
 
     // Replace any non-printable or control characters with empty string
-    // Excluding allowed JSON control characters
-    cleaned = cleaned.replace(/[^\x20-\x7E\n\r\t]/g, '');
+    // Excluding allowed JSON control characters and ZWNJ (U+200C)
+    cleaned = cleaned.replace(/[^\x20-\x7E\n\r\t\u200C]/g, '');
 
     // Ensure proper handling of newlines
     cleaned = cleaned.replace(/\\n/g, '\\n').replace(/\n/g, '\\n');
@@ -250,7 +251,7 @@ function extractValidJson(rawInput) {
     // Clean up the extracted JSON
     jsonCandidate = jsonCandidate
         .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '') // Remove control chars
-        .replace(/[\u200B-\u200F\uFEFF\u061C]/g, '')  // Remove zero-width chars
+        .replace(/[\u200B\u200D-\u200F\uFEFF\u061C]/g, '')  // Remove zero-width chars but keep ZWNJ (U+200C)
         .replace(/\n/g, '\\n')                        // Escape newlines
         .replace(/\t/g, '\\t');                       // Escape tabs
 

@@ -1,12 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const {formatDate} = require('../utils/helpers');
-const {
-    TELEGRAM_BOT_TOKEN,
-    TARGET_CHANNEL_ID,
-    SIGNATURE
-} = process.env;
+
 // Initialize the bot with token
-const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, {polling: false});
 
 /**
  * Send message to Telegram channel
@@ -14,6 +9,10 @@ const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, {polling: false});
  * @returns {Promise<Object>} - Telegram API response
  */
 async function sendTelegramMessage(message) {
+    const {TELEGRAM_BOT_TOKEN, TARGET_CHANNEL_ID} = process.env;
+
+    const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, {polling: false});
+
     try {
         return await bot.sendMessage(
             TARGET_CHANNEL_ID,
@@ -36,6 +35,8 @@ async function sendTelegramMessage(message) {
  * @returns {Promise<Object>} - Telegram API response
  */
 async function sendTelegramPhoto(imageUrl, caption) {
+    const {TELEGRAM_BOT_TOKEN, TARGET_CHANNEL_ID} = process.env;
+    const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, {polling: false});
 
     try {
         return await bot.sendPhoto(
@@ -61,6 +62,7 @@ async function sendTelegramPhoto(imageUrl, caption) {
  * @returns {Promise<Object>} - Result of the publishing operation
  */
 async function publishNewsToTelegram(article) {
+    const {SIGNATURE} = process.env;
     try {
         const formattedDate = formatDate();
 

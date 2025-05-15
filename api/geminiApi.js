@@ -1,5 +1,9 @@
 const axios = require('axios');
-const {config} = require('../config');
+const {
+    GEMINI_API_KEY,
+    GEMINI_PROMPT_TRANSLATE,
+    GEMINI_PROMPT_REVIEW,
+} = process.env;
 
 /**
  * Send text to Gemini for review or translation
@@ -10,7 +14,7 @@ const {config} = require('../config');
 async function processWithGemini(text, prompt) {
     try {
         const response = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${config.gemini.apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
             {
                 contents: [{
                     parts: [{text: prompt + " : " + text}]
@@ -77,7 +81,7 @@ async function reviewNews(newsItems) {
         const textForReview = JSON.stringify(reviewData, null, 2);
 
         // Send to Gemini with review prompt
-        const result = await processWithGemini(textForReview, config.gemini.reviewPrompt);
+        const result = await processWithGemini(textForReview, GEMINI_PROMPT_REVIEW);
 
         // Parse the JSON response from Gemini
         return cleanAndParseJson(result);
@@ -102,7 +106,7 @@ async function translateArticle(article) {
         }, null, 2);
 
         // Send to Gemini with translation prompt
-        const result = await processWithGemini(textForTranslation, config.gemini.translationPrompt);
+        const result = await processWithGemini(textForTranslation, GEMINI_PROMPT_TRANSLATE);
 
         result_backup = result;
         // Parse the JSON response from Gemini

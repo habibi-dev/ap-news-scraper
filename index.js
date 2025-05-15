@@ -1,4 +1,4 @@
-const {initDatabase} = require('./db/newsDatabase');
+const {initDatabase, cleanupOldRecords} = require('./db/newsDatabase');
 const {scrapeAndStoreNews, processPendingNews, processTranslationNews, publishNews} = require('./services/newsService');
 require('dotenv').config();
 
@@ -33,6 +33,11 @@ async function main() {
             case 'publish':
                 // Publish translated news to Telegram
                 await publishNews();
+                break;
+
+            case 'clear':
+                // Publish translated news to Telegram
+                await cleanupOldRecords();
                 break;
 
             default:

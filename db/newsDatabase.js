@@ -27,17 +27,18 @@ async function initDatabase() {
     // Create tables if they don't exist
     await db.exec(`
         CREATE TABLE IF NOT EXISTS news (
-            id TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            link TEXT NOT NULL,
-            source TEXT,
-            image_url TEXT,
-            content TEXT,
-            translated_title TEXT,
-            translated_content TEXT,
-            status TEXT DEFAULT '${StatusEnum.PENDING_REVIEW}',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                                            id TEXT PRIMARY KEY,
+                                            title TEXT NOT NULL,
+                                            link TEXT NOT NULL,
+                                            source TEXT,
+                                            image_url TEXT,
+                                            video_url TEXT,
+                                            content TEXT,
+                                            translated_title TEXT,
+                                            translated_content TEXT,
+                                            status TEXT DEFAULT '${StatusEnum.PENDING_REVIEW}',
+                                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     `);
 
@@ -117,12 +118,10 @@ async function updateNewsItem(id, updates) {
  */
 async function getNewsByStatus(status, limit = 100) {
     try {
-        const news = await db.all(
+        return await db.all(
             'SELECT * FROM news WHERE status = ? ORDER BY created_at DESC LIMIT ?',
             [status, limit]
         );
-
-        return news;
     } catch (error) {
         console.error('Error getting news by status:', error);
         throw error;
@@ -136,8 +135,7 @@ async function getNewsByStatus(status, limit = 100) {
  */
 async function getNewsById(id) {
     try {
-        const news = await db.get('SELECT * FROM news WHERE id = ?', id);
-        return news;
+        return await db.get('SELECT * FROM news WHERE id = ?', id);
     } catch (error) {
         console.error('Error getting news by ID:', error);
         throw error;
@@ -164,6 +162,39 @@ async function updateNewsStatus(id, status) {
     }
 }
 
+/**
+ * Keep only the latest 10,000 records and delete the rest
+ * @returns {Promise<number>} - Number of deleted records
+ */
+async function cleanupOldRecords() {
+    try {
+        // Get the created_at timestamp of the 10,000th record
+        const result = await db.get(`
+            SELECT created_at FROM news 
+            ORDER BY created_at DESC 
+            LIMIT 1 OFFSET 9999
+        `);
+
+        // If we have less than 10,000 records, no cleanup needed
+        if (!result) {
+            console.log('Less than 10,000 records found, no cleanup needed');
+            return 0;
+        }
+
+        // Delete records older than the cutoff timestamp
+        const { changes } = await db.run(`
+            DELETE FROM news 
+            WHERE created_at < ?
+        `, [result.created_at]);
+
+        console.log(`Deleted ${changes} old news records`);
+        return changes;
+    } catch (error) {
+        console.error('Error cleaning up old records:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     initDatabase,
     insertNewsItem,
@@ -171,5 +202,6 @@ module.exports = {
     getNewsByStatus,
     getNewsById,
     updateNewsStatus,
+    cleanupOldRecords,
     StatusEnum
 };

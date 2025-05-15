@@ -9,6 +9,17 @@ const {
 const config = {
     // News sources with their selectors
     sources: {
+        "mehr": {
+            url: "https://www.mehrnews.com/archive",
+            selectors: {
+                newsContainer: 'li.news',
+                title: 'h3 a',
+                link: 'h3 a',
+                text: 'article .item-body',
+                remove: 'article .item-header',
+                image: 'head > meta[property="og:image"]',
+            }
+        },
         "apnews": {
             url: "https://apnews.com/world-news",
             selectors: {

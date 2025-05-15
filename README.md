@@ -92,3 +92,94 @@ npm run publish
 - در فایل `config.js` می‌توانید انتخاب‌گرهای CSS را برای منابع مختلف خبری تنظیم کنید.
 - پرامپت‌های جمنای باید به گونه‌ای تنظیم شوند که خروجی JSON با فرمت مناسب تولید کنند.
 - برخی سایت‌های خبری دارای محافظت CloudFlare هستند که ممکن است نیاز به تنظیمات بیشتری داشته باشند.
+
+chmod +x news_scraper_cron.sh
+./news_scraper_cron.sh
+
+
+```bash
+#!/bin/bash
+
+# News Scraper, Translator and Publisher Automation Script
+# This script automates the process of scraping, processing, translating and publishing news
+# It runs every 10 minutes and only operates between 8 AM and midnight
+
+# Set path to project directory
+LOG_FILE="logs/process_$(date +\%Y\%m\%d).log"
+
+# Create logs directory if it doesn't exist
+mkdir -p "logs"
+
+# Function to log messages with timestamp
+log_message() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+# Function to check if current time is within allowed operation hours (8:00 AM to 12:00 AM)
+is_operation_allowed() {
+    # Get current hour in Tehran timezone (IRST - Iran Standard Time)
+    current_hour=$(TZ="Asia/Tehran" date +\%H)
+    if [ "$current_hour" -lt 8 ] || [ "$current_hour" -ge 24 ]; then
+        return 1  # Outside operation hours
+    else
+        return 0  # Within operation hours
+    fi
+}
+
+# Check if we should run the operations based on time
+if ! is_operation_allowed; then
+    log_message "Outside operation hours (8:00-24:00). Skipping execution."
+    exit 0
+fi
+
+
+# Function to run a command and log its output
+run_command() {
+    local command="$1"
+    local description="$2"
+    
+    log_message "Starting $description..."
+    
+    # Execute command and capture both stdout and stderr
+    output=$(eval "$command" 2>&1)
+    exit_code=$?
+    
+    if [ $exit_code -eq 0 ]; then
+        log_message "Successfully completed $description"
+        log_message "Output: $output"
+    else
+        log_message "ERROR: Failed to execute $description. Exit code: $exit_code"
+        log_message "Output: $output"
+    fi
+    
+    # Small delay between operations
+    sleep 2
+    
+    return $exit_code
+}
+
+# Start the process
+log_message "Starting news processing cycle"
+
+# Step 1: Scrape news from sources
+run_command "node index.js all" "news scraping"
+
+# Step 2: Process pending news (analyze with Gemini AI)
+run_command "node index.js pending" "news analysis"
+
+# Step 3: Translate approved news
+run_command "node index.js translate" "news translation"
+
+# Step 4: Publish translated news to Telegram
+if is_operation_allowed; then
+    run_command "npm run publish" "news publishing"
+else
+    log_message "Operation hours ended during execution. Skipping publishing."
+fi
+
+# Step 5: clear old translations
+run_command "node index.js clear" "news clear"
+
+log_message "Completed news processing cycle"
+exit 0
+```

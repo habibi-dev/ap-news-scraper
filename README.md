@@ -93,9 +93,6 @@ npm run publish
 - پرامپت‌های جمنای باید به گونه‌ای تنظیم شوند که خروجی JSON با فرمت مناسب تولید کنند.
 - برخی سایت‌های خبری دارای محافظت CloudFlare هستند که ممکن است نیاز به تنظیمات بیشتری داشته باشند.
 
-chmod +x news_scraper_cron.sh
-./news_scraper_cron.sh
-
 
 ```bash
 #!/bin/bash
@@ -183,3 +180,8 @@ run_command "node index.js clear" "news clear"
 log_message "Completed news processing cycle"
 exit 0
 ```
+
+```chmod +x news_scraper_cron.sh
+./news_scraper_cron.sh```
+
+```*/10 * * * * /path/to/news_scraper_cron.sh```

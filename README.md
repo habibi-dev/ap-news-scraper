@@ -104,6 +104,24 @@ npm run publish
 # Set path to project directory
 LOG_FILE="logs/process_$(date +\%Y\%m\%d).log"
 
+# Load environment variables and PATH
+# This helps cron to recognize all commands like node, npm, etc.
+if [ -f "$HOME/.profile" ]; then
+    source "$HOME/.profile"
+elif [ -f "$HOME/.bash_profile" ]; then
+    source "$HOME/.bash_profile"
+elif [ -f "$HOME/.bashrc" ]; then
+    source "$HOME/.bashrc"
+fi
+
+# If you're using NVM, you might need this:
+if [ -f "$HOME/.nvm/nvm.sh" ]; then
+    source "$HOME/.nvm/nvm.sh"
+    # Use specific Node version if needed
+    # nvm use default > /dev/null 2>&1
+fi
+
+
 # Create logs directory if it doesn't exist
 mkdir -p "logs"
 

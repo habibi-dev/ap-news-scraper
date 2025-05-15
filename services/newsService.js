@@ -18,19 +18,22 @@ const fs = require('fs').promises;
  */
 async function scrapeAndStoreNews(sourceName = null) {
     try {
-        // If source name is provided, only scrape that source
-        const sourcesToScrape = sourceName ?
-            {[sourceName]: config.sources[sourceName]} :
-            config.sources;
+        // If sourceName is 'all' or null, scrape all sources
+        const shouldScrapeAll = sourceName === null || sourceName === 'all';
 
-        // Check if the source exists
-        if (sourceName && !config.sources[sourceName]) {
+        // If source name is provided and not 'all', only scrape that source
+        const sourcesToScrape = shouldScrapeAll ?
+            config.sources :
+            {[sourceName]: config.sources[sourceName]};
+
+        // Check if the source exists when a specific source is requested
+        if (!shouldScrapeAll && !config.sources[sourceName]) {
             console.error(`Source "${sourceName}" not found in configuration`);
             console.log('Available sources:', Object.keys(config.sources).join(', '));
             return;
         }
 
-        console.log(`Scraping ${sourceName || 'all sources'}...`);
+        console.log(`Scraping ${shouldScrapeAll ? 'all sources' : sourceName}...`);
 
         // Process each source
         for (const [name, source] of Object.entries(sourcesToScrape)) {

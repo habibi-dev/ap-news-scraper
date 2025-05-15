@@ -44,7 +44,6 @@ async function processWithGemini(text, prompt) {
     }
 }
 
-
 /**
  * Enhanced JSON parser that handles various problematic characters in Persian/Arabic text
  * @param {string} result - The JSON string to parse
@@ -57,6 +56,12 @@ function cleanAndParseJson(result) {
             .replace(/^```json\s*/i, '')  // remove opening ```json
             .replace(/\s*```$/, '')       // remove closing ```
             .trim();
+
+        // Fix common BOM (Byte Order Mark) issues at the beginning of the file
+        cleaned = cleaned.replace(/^\uFEFF/, '');
+
+        // Handle potential non-standard JSON format issues
+        cleaned = cleaned.replace(/^[\s\n\r]*\{/, '{'); // Fix issues at the start of JSON
 
         // Remove all ASCII control characters (0-31) except allowed ones in JSON (\n, \r, \t)
         cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
@@ -72,17 +77,34 @@ function cleanAndParseJson(result) {
             // Replace RTL and LTR marks
             .replace(/[\u202A-\u202E]/g, '');
 
-        // Handle line breaks and properly escape them
-        cleaned = cleaned
-            .replace(/\r\n/g, '\\n')
-            .replace(/\n/g, '\\n')
-            .replace(/\t/g, '\\t');
+        // Properly handle newlines in the JSON content
+        // First identify if we're dealing with actual newlines in the content
+        if (cleaned.includes('\n')) {
+            // Check if it's within quotes or not
+            const matches = cleaned.match(/"[^"]*(?:\\.[^"]*)*"/g) || [];
+            for (const match of matches) {
+                if (match.includes('\n')) {
+                    const escaped = match.replace(/\n/g, '\\n');
+                    cleaned = cleaned.replace(match, escaped);
+                }
+            }
+        }
 
-        // Fix potential unescaped quotes within string values
-        // This is a simplistic approach - a more robust solution would be context-aware
-        cleaned = fixUnescapedQuotes(cleaned);
+        // Fix tabs similarly
+        cleaned = cleaned.replace(/\t/g, '\\t');
 
-        return JSON.parse(cleaned);
+        // Try to parse the JSON directly after basic cleaning
+        try {
+            return JSON.parse(cleaned);
+        } catch (initialErr) {
+            // If direct parsing fails, try more aggressive fixes
+
+            // Fix potential unescaped quotes within string values
+            cleaned = fixUnescapedQuotes(cleaned);
+
+            // Try parsing again after fixing quotes
+            return JSON.parse(cleaned);
+        }
     } catch (err) {
         console.error("Error parsing JSON:", err.message);
         console.log("Original result:\n", result);
@@ -95,37 +117,64 @@ function cleanAndParseJson(result) {
             return JSON.parse(stripped);
         } catch (fallbackErr) {
             console.error("Fallback parsing also failed:", fallbackErr.message);
-            throw err; // Throw the original error
+
+            // One last attempt - try to manually extract the JSON structure
+            try {
+                const extractedJson = extractValidJson(result);
+                console.log("Attempting with manually extracted JSON...");
+                return JSON.parse(extractedJson);
+            } catch (extractErr) {
+                console.error("All parsing methods failed:", extractErr.message);
+                throw err; // Throw the original error
+            }
         }
     }
 }
 
 /**
  * Fix potential unescaped quotes within JSON strings
- * This is a simplified approach and might not work for complex nested structures
  * @param {string} jsonString - The JSON string to fix
  * @returns {string} Fixed JSON string
  */
 function fixUnescapedQuotes(jsonString) {
-    // This is a simplified approach - would need more context awareness for complex JSON
+    // More robust approach to handle quotes within strings
     let inString = false;
     let result = '';
-    let prevChar = '';
+    let i = 0;
 
-    for (let i = 0; i < jsonString.length; i++) {
+    while (i < jsonString.length) {
         const char = jsonString[i];
 
-        if (char === '"' && prevChar !== '\\') {
-            inString = !inString;
+        if (char === '"') {
+            // Check if this quote is escaped
+            let isEscaped = false;
+            let j = i - 1;
+            let backslashCount = 0;
+
+            // Count preceding backslashes
+            while (j >= 0 && jsonString[j] === '\\') {
+                backslashCount++;
+                j--;
+            }
+
+            // An odd number of backslashes means the quote is escaped
+            isEscaped = backslashCount % 2 === 1;
+
+            if (!isEscaped) {
+                inString = !inString;
+            }
         }
 
-        if (inString && char === '"' && prevChar !== '\\') {
+        // If inside a string and we encounter a quote that's not properly escaped
+        if (inString && char === '"' && i > 0 && jsonString[i-1] !== '\\' &&
+            (i < 2 || (i >= 2 && jsonString[i-2] !== '\\' && jsonString[i-1] === '\\'))) {
+            // This is an unescaped quote within a string - escape it
             result += '\\' + char;
         } else {
             result += char;
         }
 
-        prevChar = char;
+        i++;
     }
 
     return result;
@@ -143,6 +192,9 @@ function stripProblemChars(jsonStr) {
         .replace(/\s*```$/, '')
         .trim();
 
+    // Fix BOM and initial whitespace issues
+    cleaned = cleaned.replace(/^\uFEFF/, '').replace(/^[\s\n\r]*\{/, '{');
+
     // Try to extract the JSON contents if we can identify the structure
     const jsonMatch = cleaned.match(/\{\s*".*"\s*:\s*".*"\s*(?:,\s*".*"\s*:\s*".*"\s*)*\}/);
     if (jsonMatch) {
@@ -151,7 +203,58 @@ function stripProblemChars(jsonStr) {
 
     // Replace any non-printable or control characters with empty string
     // Excluding allowed JSON control characters
-    return cleaned.replace(/[^\x20-\x7E\n\r\t]/g, '');
+    cleaned = cleaned.replace(/[^\x20-\x7E\n\r\t]/g, '');
+
+    // Ensure proper handling of newlines
+    cleaned = cleaned.replace(/\\n/g, '\\n').replace(/\n/g, '\\n');
+
+    return cleaned;
+}
+
+/**
+ * Attempt to extract valid JSON from a potentially malformed string
+ * @param {string} rawInput - The raw input string
+ * @returns {string} Extracted JSON string
+ */
+function extractValidJson(rawInput) {
+    // Remove code block markers and trim
+    let input = rawInput
+        .replace(/^```json\s*/i, '')
+        .replace(/\s*```$/, '')
+        .trim();
+
+    // Find the starting and ending braces for objects or brackets for arrays
+    const firstBrace = input.indexOf('{');
+    const lastBrace = input.lastIndexOf('}');
+    const firstBracket = input.indexOf('[');
+    const lastBracket = input.lastIndexOf(']');
+
+    let start, end;
+
+    // Determine if we're dealing with an object or array
+    if (firstBrace !== -1 && lastBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+        // It's an object
+        start = firstBrace;
+        end = lastBrace + 1;
+    } else if (firstBracket !== -1 && lastBracket !== -1) {
+        // It's an array
+        start = firstBracket;
+        end = lastBracket + 1;
+    } else {
+        throw new Error("Could not find valid JSON structure");
+    }
+
+    // Extract the JSON part
+    let jsonCandidate = input.substring(start, end);
+
+    // Clean up the extracted JSON
+    jsonCandidate = jsonCandidate
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '') // Remove control chars
+        .replace(/[\u200B-\u200F\uFEFF\u061C]/g, '')  // Remove zero-width chars
+        .replace(/\n/g, '\\n')                        // Escape newlines
+        .replace(/\t/g, '\\t');                       // Escape tabs
+
+    return jsonCandidate;
 }
 
 

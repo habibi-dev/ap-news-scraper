@@ -44,20 +44,114 @@ async function processWithGemini(text, prompt) {
     }
 }
 
+
+/**
+ * Enhanced JSON parser that handles various problematic characters in Persian/Arabic text
+ * @param {string} result - The JSON string to parse
+ * @returns {Object} Parsed JSON object
+ */
 function cleanAndParseJson(result) {
     try {
-        const cleaned = result
+        // Remove code block markers if present
+        let cleaned = result
             .replace(/^```json\s*/i, '')  // remove opening ```json
             .replace(/\s*```$/, '')       // remove closing ```
-            .replace(/[\u200B-\u200D\uFEFF]/g, '') // remove invisible unicode chars
             .trim();
+
+        // Remove all ASCII control characters (0-31) except allowed ones in JSON (\n, \r, \t)
+        cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+
+        // Replace problematic Unicode characters
+        cleaned = cleaned
+            // Remove zero-width characters and other invisible characters
+            .replace(/[\u200B-\u200F\uFEFF\u061C]/g, '')
+            // Replace various types of spaces with standard space
+            .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/g, ' ')
+            // Replace various types of hyphens and dashes with standard hyphen
+            .replace(/[\u2010-\u2015\u2212]/g, '-')
+            // Replace RTL and LTR marks
+            .replace(/[\u202A-\u202E]/g, '');
+
+        // Handle line breaks and properly escape them
+        cleaned = cleaned
+            .replace(/\r\n/g, '\\n')
+            .replace(/\n/g, '\\n')
+            .replace(/\t/g, '\\t');
+
+        // Fix potential unescaped quotes within string values
+        // This is a simplistic approach - a more robust solution would be context-aware
+        cleaned = fixUnescapedQuotes(cleaned);
 
         return JSON.parse(cleaned);
     } catch (err) {
         console.error("Error parsing JSON:", err.message);
         console.log("Original result:\n", result);
-        throw err;
+
+        // Fallback method if the above cleaning doesn't work
+        try {
+            // More aggressive cleaning for particularly problematic JSON
+            const stripped = stripProblemChars(result);
+            console.log("Attempting with more aggressive cleaning...");
+            return JSON.parse(stripped);
+        } catch (fallbackErr) {
+            console.error("Fallback parsing also failed:", fallbackErr.message);
+            throw err; // Throw the original error
+        }
     }
+}
+
+/**
+ * Fix potential unescaped quotes within JSON strings
+ * This is a simplified approach and might not work for complex nested structures
+ * @param {string} jsonString - The JSON string to fix
+ * @returns {string} Fixed JSON string
+ */
+function fixUnescapedQuotes(jsonString) {
+    // This is a simplified approach - would need more context awareness for complex JSON
+    let inString = false;
+    let result = '';
+    let prevChar = '';
+
+    for (let i = 0; i < jsonString.length; i++) {
+        const char = jsonString[i];
+
+        if (char === '"' && prevChar !== '\\') {
+            inString = !inString;
+        }
+
+        if (inString && char === '"' && prevChar !== '\\') {
+            result += '\\' + char;
+        } else {
+            result += char;
+        }
+
+        prevChar = char;
+    }
+
+    return result;
+}
+
+/**
+ * A more aggressive approach to strip problematic characters
+ * @param {string} jsonStr - The JSON string to clean
+ * @returns {string} Cleaned JSON string
+ */
+function stripProblemChars(jsonStr) {
+    // Remove code block markers
+    let cleaned = jsonStr
+        .replace(/^```json\s*/i, '')
+        .replace(/\s*```$/, '')
+        .trim();
+
+    // Try to extract the JSON contents if we can identify the structure
+    const jsonMatch = cleaned.match(/\{\s*".*"\s*:\s*".*"\s*(?:,\s*".*"\s*:\s*".*"\s*)*\}/);
+    if (jsonMatch) {
+        cleaned = jsonMatch[0];
+    }
+
+    // Replace any non-printable or control characters with empty string
+    // Excluding allowed JSON control characters
+    return cleaned.replace(/[^\x20-\x7E\n\r\t]/g, '');
 }
 
 

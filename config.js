@@ -126,19 +126,6 @@ const config = {
             'Upgrade-Insecure-Requests': '1',
             'Cache-Control': 'max-age=0'
         }
-    },
-
-    // Gemini API configuration
-    gemini: {
-        apiKey: GEMINI_API_KEY,
-        translationPrompt: GEMINI_PROMPT_TRANSLATE,
-        reviewPrompt: GEMINI_PROMPT_REVIEW
-    },
-
-    // Telegram bot configuration
-    telegram: {
-        botToken: TELEGRAM_BOT_TOKEN,
-        channelId: TARGET_CHANNEL_ID
     }
 };
 

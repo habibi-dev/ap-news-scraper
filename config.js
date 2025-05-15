@@ -1,11 +1,3 @@
-const {
-    TELEGRAM_BOT_TOKEN,
-    TARGET_CHANNEL_ID,
-    GEMINI_API_KEY,
-    GEMINI_PROMPT_TRANSLATE,
-    GEMINI_PROMPT_REVIEW,
-} = process.env;
-
 const config = {
     // News sources with their selectors
     sources: {
@@ -18,6 +10,19 @@ const config = {
                 text: 'article .item-body',
                 remove: 'article .item-header',
                 image: 'head > meta[property="og:image"]',
+                video: "video.jw-video.jw-reset"
+            }
+        },
+        "tasnimnews": {
+            url: "https://www.tasnimnews.com/fa/archive",
+            selectors: {
+                newsContainer: 'article.list-item',
+                title: 'h2',
+                link: 'a',
+                text: '.story',
+                remove: '.story .hideTag,.story blockquote',
+                image: 'head > meta[property="og:image"]',
+                video: "video.jw-video.jw-reset"
             }
         },
         "apnews": {
@@ -26,9 +31,10 @@ const config = {
                 newsContainer: '.PagePromo',
                 title: 'h3 span.PagePromoContentIcons-text',
                 link: 'h3.PagePromo-title > a',
-                text: '.RichTextStoryBody.RichTextBody',
+                text: '.RichTextStoryBody.RichTextBody,.VideoPage-pageSubHeading',
                 remove: '.RichTextStoryBody.RichTextBody > div',
                 image: 'head > meta[property="og:image"]',
+                video: "video.jw-video.jw-reset"
             }
         },
         "ndtv": {
@@ -40,6 +46,7 @@ const config = {
                 text: '.Art-exp_cn',
                 remove: 'div#ndpl-iframe,iframe',
                 image: 'head > meta[property="og:image"]',
+                video: ""
             }
         },
         "cnn": {
@@ -48,9 +55,10 @@ const config = {
                 newsContainer: 'a.container__link.container__link--type-article.container_lead-plus-headlines__link',
                 title: 'span.container__headline-text',
                 link: '',
-                text: '.article__content',
+                text: '.article__content,.video-resource__description',
                 remove: '.container.container_list-headlines-ranked,.container.container_list-headlines-with-read-times',
                 image: 'head > meta[property="og:image"]',
+                video: "video#bitmovinplayer-video-top-player-container-1"
             }
         },
         "bbc": {
@@ -62,6 +70,7 @@ const config = {
                 text: 'main#main-content > article',
                 remove: 'article [data-component="headline-block"], article [data-component="byline-block"],article [data-component="video-block"],article [data-testid="ad-unit"],article [data-component="links-block"],article figure',
                 image: 'head > meta[property="og:image"]',
+                video: ""
             }
         },
         "upi": {
@@ -73,6 +82,7 @@ const config = {
                 text: 'article[itemprop="articleBody"]',
                 remove: 'article[itemprop="articleBody"] > div',
                 image: 'head > meta[property="og:image"]',
+                video: ""
             }
         },
         "time": {
@@ -84,6 +94,7 @@ const config = {
                 text: 'article#article-body',
                 remove: 'section[aria-labelledby="intro-section"],article#article-body > div > div',
                 image: 'head > meta[property="og:image"]',
+                video: ""
             }
         },
         "washingtonpost": {
@@ -95,6 +106,7 @@ const config = {
                 text: '.grid-body .teaser-content',
                 remove: '.grid-body>div[data-testid="byline-container"],.grid-body [data-testid="subscribe-promo-button"]',
                 image: 'head > meta[property="og:image"]',
+                video: ""
             }
         },
         "nbcnews": {
@@ -106,6 +118,7 @@ const config = {
                 text: '.article-body',
                 remove: '.article-body > section , .article-body figure,.article-body .recommended-intersection-ref,.article-body section.inline-video.inline-video--in-body',
                 image: 'head > meta[property="og:image"]',
+                video: ""
             }
         }
     },

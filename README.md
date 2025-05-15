@@ -159,7 +159,7 @@ run_command() {
 log_message "Starting news processing cycle"
 
 # Step 1: Scrape news from sources
-run_command "node index.js all" "news scraping"
+run_command "node index.js read all" "news scraping"
 
 # Step 2: Process pending news (analyze with Gemini AI)
 run_command "node index.js pending" "news analysis"

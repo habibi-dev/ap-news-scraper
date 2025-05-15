@@ -9,7 +9,7 @@ const {
     StatusEnum
 } = require('../db/newsDatabase');
 const {config} = require('../config');
-const fs = require('fs').promises;
+const {delay} = require("../utils/helpers");
 
 /**
  * Scrape news from all sources and store in database
@@ -200,6 +200,7 @@ async function publishNews() {
                 console.error(`Error publishing article ${news.id}:`, error);
                 // Continue with next news item if one fails
             }
+            await delay(500)
         }
 
         console.log('Completed publishing news');

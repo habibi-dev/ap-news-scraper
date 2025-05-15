@@ -1,0 +1,32 @@
+{
+  "name": "news-scraper-translator",
+  "version": "1.0.0",
+  "description": "News scraper, translator and publisher system",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "scrape": "node index.js scrape",
+    "pending": "node index.js pending",
+    "translate": "node index.js translate",
+    "publish": "node index.js publish",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "news",
+    "scraper",
+    "translator",
+    "gemini",
+    "telegram",
+    "automation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "crypto": "^1.0.1",
+    "node-telegram-bot-api": "^0.66.0",
+    "puppeteer": "^24.8.2",
+    "sqlite": "^5.0.1",
+    "sqlite3": "^5.1.6"
+  }
+}

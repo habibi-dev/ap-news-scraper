@@ -22,8 +22,8 @@
 
 1. کلون کردن مخزن
 ```bash
-git clone https://github.com/yourusername/news-scraper-translator.git
-cd news-scraper-translator
+git clone https://github.com/habibi-dev/ap-news-scraper.git
+cd ap-news-scraper
 ```
 
 2. نصب وابستگی‌ها
@@ -40,7 +40,7 @@ npm install
 
 ### خراش داده‌های خبری
 ```bash
-npm run scrape
+npm run read
 # یا برای منبع خاص
 node index.js scrape bbc
 ```

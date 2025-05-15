@@ -28,5 +28,8 @@
     "puppeteer": "^24.8.2",
     "sqlite": "^5.0.1",
     "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "dotenv": "^16.5.0"
   }
 }

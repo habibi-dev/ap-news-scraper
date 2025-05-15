@@ -1,6 +1,6 @@
 const {initDatabase} = require('./db/newsDatabase');
 const {scrapeAndStoreNews, processPendingNews, processTranslationNews, publishNews} = require('./services/newsService');
-const {config} = require('./config');
+require('dotenv').config();
 
 /**
  * Main function to run the application

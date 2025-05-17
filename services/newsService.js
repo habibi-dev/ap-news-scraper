@@ -131,15 +131,15 @@ async function processTranslationNews() {
             try {
                 console.log(`Processing article: ${news.id} - ${news.title}`);
 
-                if (containsKeyword(news.title, config.filters) || (news.content && containsKeyword(news.content, config.filters))) {
-                    await updateNewsStatus(news.id, StatusEnum.REJECTED);
-                    continue;
-                }
-
                 // Scrape full content if not already present
                 if (!news.content) {
                     console.log(`Scraping content for ${news.id} from ${news.link}`);
                     const articleContent = await scrapeArticleContent(news.link, config.sources[news.source].selectors);
+
+                    if (containsKeyword(articleContent.title, config.filters) || (articleContent.content && containsKeyword(articleContent.content, config.filters))) {
+                        await updateNewsStatus(news.id, StatusEnum.REJECTED);
+                        continue;
+                    }
 
                     // Update news with content and image
                     await updateNewsItem(news.id, {

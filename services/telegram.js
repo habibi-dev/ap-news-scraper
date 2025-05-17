@@ -69,7 +69,7 @@ async function publishNewsToTelegram(article) {
         // Create a nice looking message
         const caption = `<b>${article.translated_title}</b>\n\n` +
             `${article.translated_content.substring(0, 1000)}${article.translated_content.length > 1000 ? '...' : ''}\n\n` +
-            // `⏰ ${formattedDate}\n` +
+            `منبع: <a href="${article.link}">${article.source} </a> \n` +
             `${SIGNATURE}`;
 
         let result;

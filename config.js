@@ -150,7 +150,8 @@ const config = {
             'Upgrade-Insecure-Requests': '1',
             'Cache-Control': 'max-age=0'
         }
-    }
+    },
+    filters: ['خامنه‌ای', 'فلسطین', 'شهید رئیسی', 'رهبر انقلاب', 'قرآن', 'نماز']
 };
 
 module.exports = {config};

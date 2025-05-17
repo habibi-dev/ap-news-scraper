@@ -156,7 +156,7 @@ async function processTranslationNews() {
                     content: news.content,
                     translated_title: translation.translatedTitle,
                     translated_content: translation.translatedContent,
-                    status: StatusEnum.TRANSLATED
+                    status: containsKeyword(translation.translatedTitle, config.filters) || containsKeyword(translation.translatedContent, config.filters) ? StatusEnum.REJECTED : StatusEnum.TRANSLATED
                 });
 
                 console.log(`Completed translation for ${news.id}`);
@@ -171,6 +171,10 @@ async function processTranslationNews() {
         console.error('Error processing translation news:', error);
         throw error;
     }
+}
+
+function containsKeyword(text, keywords) {
+    return keywords.some(keyword => text.includes(keyword));
 }
 
 /**

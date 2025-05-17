@@ -214,7 +214,7 @@ async function publishNews() {
                 console.error(`Error publishing article ${news.id}:`, error);
                 // Continue with next news item if one fails
             }
-            await delay(1000)
+            await delay(3000)
         }
 
         console.log('Completed publishing news');

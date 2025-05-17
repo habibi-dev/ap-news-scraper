@@ -14,7 +14,7 @@ const config = {
             }
         },
         "IranIntl": {
-            url: "https://www.mehrnews.com/archive",
+            url: "https://www.iranintl.com/en/iran-insights",
             selectors: {
                 newsContainer: 'article',
                 title: 'h3',

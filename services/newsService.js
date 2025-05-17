@@ -6,7 +6,7 @@ const {
     updateNewsItem,
     getNewsByStatus,
     updateNewsStatus,
-    StatusEnum
+    StatusEnum, getNewsByStatusInLast24Hours
 } = require('../db/newsDatabase');
 const {config} = require('../config');
 const {delay} = require("../utils/helpers");
@@ -67,7 +67,7 @@ async function scrapeAndStoreNews(sourceName = null) {
 async function processPendingNews() {
     try {
         // Get news items pending review
-        const publishedNews = await getNewsByStatus(StatusEnum.PUBLISHED);
+        const publishedNews = await getNewsByStatusInLast24Hours(StatusEnum.PUBLISHED,500);
         const pendingNews = await getNewsByStatus(StatusEnum.PENDING_REVIEW);
         console.log(`Found ${pendingNews.length} news items pending review`);
 

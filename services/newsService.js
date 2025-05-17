@@ -131,8 +131,10 @@ async function processTranslationNews() {
             try {
                 console.log(`Processing article: ${news.id} - ${news.title}`);
 
-                if (containsKeyword(news.title, config.filters) || (news.content && containsKeyword(news.content, config.filters)))
+                if (containsKeyword(news.title, config.filters) || (news.content && containsKeyword(news.content, config.filters))) {
+                    await updateNewsStatus(news.id, StatusEnum.REJECTED);
                     continue;
+                }
 
                 // Scrape full content if not already present
                 if (!news.content) {

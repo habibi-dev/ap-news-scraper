@@ -136,7 +136,7 @@ async function processTranslationNews() {
                     console.log(`Scraping content for ${news.id} from ${news.link}`);
                     const articleContent = await scrapeArticleContent(news.link, config.sources[news.source].selectors);
 
-                    if (containsKeyword(articleContent.title, config.filters) || (articleContent.content && containsKeyword(articleContent.content, config.filters))) {
+                    if (containsKeyword(news.title, config.filters) || (articleContent.content && containsKeyword(articleContent.content, config.filters))) {
                         await updateNewsStatus(news.id, StatusEnum.REJECTED);
                         continue;
                     }

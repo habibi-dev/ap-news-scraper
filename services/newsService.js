@@ -86,6 +86,7 @@ async function processPendingNews() {
             title: news.title
         }));
 
+        console.log(simplifiedNewsPublished.length);
         console.log('Sending news to Gemini for review...');
         const reviewResults = await reviewNews([...simplifiedNewsPublished, ...simplifiedNews]);
         const accepted = {};

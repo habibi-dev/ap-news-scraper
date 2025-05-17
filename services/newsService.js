@@ -131,7 +131,7 @@ async function processTranslationNews() {
             try {
                 console.log(`Processing article: ${news.id} - ${news.title}`);
 
-                if (containsKeyword(news.title, config.filters) || containsKeyword(news.content, config.filters))
+                if (containsKeyword(news.title, config.filters) || (news.content && containsKeyword(news.content, config.filters)))
                     continue;
 
                 // Scrape full content if not already present

@@ -128,6 +128,20 @@ async function getNewsByStatus(status, limit = 100) {
     }
 }
 
+async function getNewsByStatusInLast24Hours(status, limit = 100) {
+    try {
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        return await db.all(
+            'SELECT * FROM news WHERE status = ? AND created_at >= ? ORDER BY created_at DESC LIMIT ?',
+            [status, oneDayAgo, limit]
+        );
+    } catch (error) {
+        console.error('Error getting news from last 24 hours by status:', error);
+        throw error;
+    }
+}
+
+
 /**
  * Get a news item by ID
  * @param {string} id - The ID of the news item
@@ -203,5 +217,6 @@ module.exports = {
     getNewsById,
     updateNewsStatus,
     cleanupOldRecords,
+    getNewsByStatusInLast24Hours,
     StatusEnum
 };

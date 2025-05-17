@@ -67,6 +67,7 @@ async function scrapeAndStoreNews(sourceName = null) {
 async function processPendingNews() {
     try {
         // Get news items pending review
+        const publishedNews = await getNewsByStatus(StatusEnum.PUBLISHED);
         const pendingNews = await getNewsByStatus(StatusEnum.PENDING_REVIEW);
         console.log(`Found ${pendingNews.length} news items pending review`);
 
@@ -81,8 +82,12 @@ async function processPendingNews() {
             title: news.title
         }));
 
+        const simplifiedNewsPublished = publishedNews.map(news => ({
+            title: news.title
+        }));
+
         console.log('Sending news to Gemini for review...');
-        const reviewResults = await reviewNews(simplifiedNews);
+        const reviewResults = await reviewNews([...simplifiedNewsPublished, ...simplifiedNews]);
         const accepted = {};
         reviewResults.forEach(result => {
             accepted[result.id] = true;

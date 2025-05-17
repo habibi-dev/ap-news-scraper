@@ -1,7 +1,7 @@
 const config = {
     // News sources with their selectors
     sources: {
-        "mehr": {
+        "MehrNews": {
             url: "https://www.mehrnews.com/archive",
             selectors: {
                 newsContainer: 'li.news',
@@ -13,19 +13,19 @@ const config = {
                 video: "video.jw-video.jw-reset"
             }
         },
-        "tasnimnews": {
-            url: "https://www.tasnimnews.com/fa/archive",
+        "IranIntl": {
+            url: "https://www.mehrnews.com/archive",
             selectors: {
-                newsContainer: 'article.list-item',
-                title: 'h2',
-                link: 'a',
-                text: '.story',
-                remove: '.story .hideTag,.story blockquote',
+                newsContainer: 'article',
+                title: 'h3',
+                link: 'header > a',
+                text: 'article main > section',
+                remove: 'article .item-header',
                 image: 'head > meta[property="og:image"]',
                 video: "video.jw-video.jw-reset"
             }
         },
-        "apnews": {
+        "Apnews": {
             url: "https://apnews.com/world-news",
             selectors: {
                 newsContainer: '.PagePromo',
@@ -37,7 +37,7 @@ const config = {
                 video: "video.jw-video.jw-reset"
             }
         },
-        "ndtv": {
+        "NDTV": {
             url: "https://www.ndtv.com/world",
             selectors: {
                 newsContainer: '.crd-b.crd-b_h-at.res_crd-1,li.ls-ns_li,li.crd-d_v1-li',
@@ -49,7 +49,7 @@ const config = {
                 video: ""
             }
         },
-        "cnn": {
+        "CNN": {
             url: "https://edition.cnn.com/world",
             selectors: {
                 newsContainer: 'a.container__link.container__link--type-article.container_lead-plus-headlines__link',
@@ -61,7 +61,7 @@ const config = {
                 video: "video#bitmovinplayer-video-top-player-container-1"
             }
         },
-        "bbc": {
+        "BBC": {
             url: "https://www.bbc.com/news",
             selectors: {
                 newsContainer: '[data-testid="anchor-inner-wrapper"]',
@@ -73,7 +73,7 @@ const config = {
                 video: ""
             }
         },
-        "upi": {
+        "UPI": {
             url: "https://www.upi.com/Top_News/World-News/",
             selectors: {
                 newsContainer: 'a',
@@ -85,7 +85,7 @@ const config = {
                 video: ""
             }
         },
-        "time": {
+        "Time": {
             url: "https://time.com/section/world/",
             selectors: {
                 newsContainer: 'a',
@@ -97,7 +97,7 @@ const config = {
                 video: ""
             }
         },
-        "washingtonpost": {
+        "WashingtonPost": {
             url: "https://www.washingtonpost.com/world/",
             selectors: {
                 newsContainer: '.story-headline',
@@ -109,7 +109,7 @@ const config = {
                 video: ""
             }
         },
-        "nbcnews": {
+        "NBCNews": {
             url: "https://www.nbcnews.com/world",
             selectors: {
                 newsContainer: '.headline-standard,li h2',

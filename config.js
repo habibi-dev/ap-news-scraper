@@ -20,7 +20,7 @@ const config = {
                 title: 'h3',
                 link: 'header > a',
                 text: 'article main > section',
-                remove: 'article .item-header',
+                remove: '',
                 image: 'head > meta[property="og:image"]',
                 video: "video.jw-video.jw-reset"
             }

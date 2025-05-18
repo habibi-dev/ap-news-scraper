@@ -73,18 +73,6 @@ const config = {
                 video: ""
             }
         },
-        "UPI": {
-            url: "https://www.upi.com/Top_News/World-News/",
-            selectors: {
-                newsContainer: 'a',
-                title: '.title',
-                link: '',
-                text: 'article[itemprop="articleBody"]',
-                remove: 'article[itemprop="articleBody"] > div',
-                image: 'head > meta[property="og:image"]',
-                video: ""
-            }
-        },
         "Time": {
             url: "https://time.com/section/world/",
             selectors: {

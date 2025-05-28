@@ -134,7 +134,7 @@ async function scrapeArticleContent(url, selectors) {
         await delay(5000);
 
         // Extract article content - common patterns in Music sites
-        return await page.evaluate(async (selectors) =>  {
+        return await page.evaluate(async (selectors) => {
             // Find main image
             const image_url = document.querySelector(selectors.image).getAttribute('src')
 
@@ -145,7 +145,7 @@ async function scrapeArticleContent(url, selectors) {
             const mp3_url = document.querySelector(".texts div:nth-child(4) > a").getAttribute('href')
 
             return {image_url, mp3_url};
-        }, selectors);
+        }, selectors, delay);
     } catch (error) {
         console.error('Error scraping article content:', error);
         throw error;

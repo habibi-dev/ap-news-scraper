@@ -74,7 +74,7 @@ async function processTranslationMusic() {
                 // Scrape full content if not already present
                 if (!Music.mp3_url) {
                     console.log(`Scraping content for ${Music.id} from ${Music.link}`);
-                    const articleContent = await scrapeArticleContent(Music.link, config.sources[Music.source].selectors);
+                    const articleContent = await scrapeArticleContent(Music.link, config.sources.MrTehran.selectors);
 
                     // Update Music with content and image
                     await updateMusicItem(Music.id, {

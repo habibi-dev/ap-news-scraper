@@ -89,7 +89,11 @@ async function processTranslationMusic() {
 
                 // Send to Gemini for translation
                 console.log(`Translating article: ${Music.id}`);
-                const translation = await translateArticle(Music);
+                let translation = await translateArticle(Music);
+
+                if (Array.isArray(translation)) {
+                    translation = translation[0];
+                }
 
                 // Update with translated content
                 await updateMusicItem(Music.id, {
@@ -141,7 +145,7 @@ async function publishMusic() {
                 await publishMusicToTelegram(Music);
 
                 // Update status to published
-                await updateMusicStatus(Music.id, StatusEnum.PUBLISHED);
+             //   await updateMusicStatus(Music.id, StatusEnum.PUBLISHED);
 
                 console.log(`Successfully published ${Music.id}`);
 

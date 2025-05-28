@@ -15,7 +15,7 @@ const config = {
 
     // Browser settings
     browser: {
-        headless: true,
+        headless: false,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',

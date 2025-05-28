@@ -140,8 +140,16 @@ async function scrapeArticleContent(url, selectors) {
 
             document.querySelector("div.page-detail-actions > button").click()
             await new Promise(resolve => setTimeout(resolve, 500));
-            document.querySelector("div.bottom-sheet-content .bottom-sheet-menu > div:nth-child(4)").click()
+
+            const Links = document.querySelectorAll("div.bottom-sheet-content .bottom-sheet-menu > div");
+            Links.forEach((link) => {
+                if (link.textContent === "Download") {
+                    link.click();
+                }
+            })
+
             await new Promise(resolve => setTimeout(resolve, 500));
+
             const mp3_url = document.querySelector(".texts div:nth-child(4) > a").getAttribute('href')
 
             return {image_url, mp3_url};

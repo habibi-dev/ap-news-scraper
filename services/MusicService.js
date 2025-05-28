@@ -83,7 +83,7 @@ async function processTranslationMusic() {
                     });
 
                     // Update the Music object with the scraped content
-                    Music.content = articleContent.content;
+                    Music.mp3_url = articleContent.mp3_url;
                     Music.image_url = articleContent.image_url;
                 }
 
@@ -93,7 +93,7 @@ async function processTranslationMusic() {
 
                 // Update with translated content
                 await updateMusicItem(Music.id, {
-                    content: Music.content,
+                    mp3_url: Music.mp3_url,
                     translated_title: translation.translatedTitle,
                     translated_artist: translation.translatedArtist,
                     status: StatusEnum.TRANSLATED

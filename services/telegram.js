@@ -217,7 +217,7 @@ async function publishMusicToTelegram(music) {
 
     try {
         // Create a nice looking message
-        const caption = `👨‍🎤<b>${music.translated_title}</b>\n\n🎙️ ${music.translated_artist}\n${SIGNATURE}`;
+        const caption = `🎵 <b>${music.translated_title}</b>\n\n🎙️ ${music.translated_artist}\n${SIGNATURE}`;
 
         // Step 1: Send photo with caption
         if (music.image_url) {

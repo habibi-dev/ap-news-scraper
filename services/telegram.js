@@ -1,5 +1,4 @@
 const TelegramBot = require('node-telegram-bot-api');
-const {formatDate} = require('../utils/helpers');
 
 /**
  * Send photo with caption to Telegram channel
@@ -11,8 +10,9 @@ async function sendTelegramPhoto(imageUrl, caption) {
     const {TELEGRAM_BOT_TOKEN, TARGET_CHANNEL_ID} = process.env;
     const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, {polling: false});
 
+    console.log("caption", caption);
     try {
-        return await bot.sendPhoto(
+        await bot.sendPhoto(
             TARGET_CHANNEL_ID,
             imageUrl,
             {
@@ -53,40 +53,6 @@ async function sendTelegramAudio(audioUrl, audioOptions = {}) {
 }
 
 /**
- * Send media group (photo + audio) to Telegram channel
- * @param {string} imageUrl - URL of the image
- * @param {string} audioUrl - URL of the audio file
- * @param {string} caption - Caption for the media group
- * @param {Object} audioMetadata - Audio metadata
- * @returns {Promise<Object>} - Telegram API response
- */
-async function sendTelegramMediaGroup(imageUrl, audioUrl, caption, audioMetadata = {}) {
-    const {TELEGRAM_BOT_TOKEN, TARGET_CHANNEL_ID} = process.env;
-    const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, {polling: false});
-
-    try {
-        const media = [
-            {
-                type: 'photo',
-                media: imageUrl,
-                caption: caption,
-                parse_mode: 'HTML'
-            },
-            {
-                type: 'audio',
-                media: audioUrl,
-                ...audioMetadata
-            }
-        ];
-
-        return await bot.sendMediaGroup(TARGET_CHANNEL_ID, media);
-    } catch (error) {
-        console.error('Error sending Telegram media group:', error.message);
-        throw error;
-    }
-}
-
-/**
  * Publish Music article to Telegram with audio file
  * @param {Object} music - The Music object to publish
  * @returns {Promise<Object>} - Result of the publishing operation
@@ -95,38 +61,9 @@ async function publishMusicToTelegram(music) {
     const {SIGNATURE} = process.env;
     try {
         // Create a nice looking message
-        const caption = `<b>${music.translated_title}</b>\n\n` +
-            `🎙️ ${music.translated_artist}\n\n` +
-            `${SIGNATURE}`;
+        const caption = `<b>${music.translated_title}</b>\n🎙️ ${music.translated_artist}\n${SIGNATURE}`;
 
-        // Audio metadata for better display
-        const audioMetadata = {
-            title: music.translated_title,
-            performer: music.translated_artist,
-            duration: undefined,
-            thumb: music.image_url
-        };
-
-        let result;
-
-        // Strategy 1: Try to send as media group (photo + audio together)
-        if (music.image_url && music.mp3_url) {
-            try {
-                console.log('Attempting to send as media group (photo + audio)...');
-                result = await sendTelegramMediaGroup(
-                    music.image_url,
-                    music.mp3_url,
-                    caption,
-                    audioMetadata
-                );
-                console.log(`Published Music as media group to Telegram: ${music.id}`);
-                return result;
-            } catch (error) {
-                console.log('Media group failed, trying individual sends...');
-            }
-        }
-
-       /* // Strategy 2: Send photo first, then audio
+        // Strategy 2: Send photo first, then audio
         if (music.image_url) {
             try {
                 await sendTelegramPhoto(music.image_url, caption);
@@ -139,20 +76,17 @@ async function publishMusicToTelegram(music) {
         // Send audio file
         if (music.mp3_url) {
             const audioOptions = {
-                caption: !music.image_url ? caption : undefined, // Only add caption if no photo was sent
                 title: music.translated_title,
                 performer: music.translated_artist,
                 duration: music.duration || undefined,
                 thumb: music.image_url || undefined
             };
 
-            result = await sendTelegramAudio(music.mp3_url, audioOptions);
+            await sendTelegramAudio(music.mp3_url, audioOptions);
             console.log('Audio sent successfully');
-        }*/
+        }
 
         console.log(`Published Music to Telegram: ${music.id}`);
-        return result;
-
     } catch (error) {
         console.error('Error publishing Music to Telegram:', error);
         throw error;
@@ -162,6 +96,5 @@ async function publishMusicToTelegram(music) {
 module.exports = {
     publishMusicToTelegram,
     sendTelegramPhoto,
-    sendTelegramAudio,
-    sendTelegramMediaGroup
+    sendTelegramAudio
 };

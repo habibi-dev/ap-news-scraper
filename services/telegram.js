@@ -25,7 +25,16 @@ async function sendTelegramPhoto(imageUrl, caption) {
 
         // If photo sending fails, try sending as a message
         console.log('Attempting to send as message instead...');
-        throw error;
+        try {
+            return await bot.sendMessage(
+                TARGET_CHANNEL_ID,
+                caption,
+                { parse_mode: 'HTML' }
+            );
+        } catch (msgError) {
+            console.error('Error sending message:', msgError.message);
+            throw msgError;
+        }
     }
 }
 
@@ -108,45 +117,71 @@ async function publishMusicToTelegram(music) {
         };
 
         let result;
+        let photoSent = false;
 
-        // Strategy 1: Try to send as media group (photo + audio together)
-        if (music.image_url && music.mp3_url) {
+        // Strategy 1: Send photo first (if available and valid)
+        if (music.image_url && music.image_url.trim() !== '') {
             try {
-                console.log('Attempting to send as media group (photo + audio)...');
-                result = await sendTelegramMediaGroup(
-                    music.image_url,
-                    music.mp3_url,
-                    caption
-                );
-                console.log(`Published Music as media group to Telegram: ${music.id}`);
-                return result;
-            } catch (error) {
-                console.log('Media group failed, trying individual sends...');
-            }
-        }
-
-        // Strategy 2: Send photo first, then audio
-        if (music.image_url) {
-            try {
+                console.log('Attempting to send photo...');
                 await sendTelegramPhoto(music.image_url, caption);
                 console.log('Photo sent successfully');
+                photoSent = true;
             } catch (error) {
-                console.log('Photo sending failed, continuing with audio...');
+                console.log('Photo sending failed:', error.message);
+                photoSent = false;
             }
         }
 
-        // Send audio file
-        if (music.mp3_url) {
-            const audioOptions = {
-                caption: !music.image_url ? caption : undefined, // Only add caption if no photo was sent
-                title: music.translated_title,
-                performer: music.translated_artist,
-                duration: music.duration || undefined,
-                thumb: music.image_url || undefined
-            };
+        // Strategy 2: Send audio file
+        if (music.mp3_url && music.mp3_url.trim() !== '') {
+            try {
+                const audioOptions = {
+                    // Only add caption if no photo was sent successfully
+                    caption: !photoSent ? caption : undefined,
+                    title: music.translated_title,
+                    performer: music.translated_artist,
+                    duration: music.duration || undefined,
+                    thumb: music.image_url || undefined
+                };
 
-            result = await sendTelegramAudio(music.mp3_url, audioOptions);
-            console.log('Audio sent successfully');
+                console.log('Attempting to send audio...');
+                result = await sendTelegramAudio(music.mp3_url, audioOptions);
+                console.log('Audio sent successfully');
+            } catch (error) {
+                console.log('Audio sending failed:', error.message);
+
+                // If both photo and audio failed, send at least the text message
+                if (!photoSent) {
+                    const {TELEGRAM_BOT_TOKEN, TARGET_CHANNEL_ID} = process.env;
+                    const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, {polling: false});
+
+                    try {
+                        result = await bot.sendMessage(
+                            TARGET_CHANNEL_ID,
+                            caption,
+                            { parse_mode: 'HTML' }
+                        );
+                        console.log('Sent as text message only');
+                    } catch (textError) {
+                        console.error('Failed to send even text message:', textError.message);
+                        throw textError;
+                    }
+                } else {
+                    // Photo was sent, so we're okay
+                    console.log('Photo was sent successfully, audio failed but continuing...');
+                }
+            }
+        } else if (!photoSent) {
+            // No audio URL and no photo sent, send as text message
+            console.log('No audio URL provided, sending as text message...');
+            const {TELEGRAM_BOT_TOKEN, TARGET_CHANNEL_ID} = process.env;
+            const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, {polling: false});
+
+            result = await bot.sendMessage(
+                TARGET_CHANNEL_ID,
+                caption,
+                { parse_mode: 'HTML' }
+            );
         }
 
         console.log(`Published Music to Telegram: ${music.id}`);
@@ -161,6 +196,5 @@ async function publishMusicToTelegram(music) {
 module.exports = {
     publishMusicToTelegram,
     sendTelegramPhoto,
-    sendTelegramAudio,
-    sendTelegramMediaGroup
+    sendTelegramAudio
 };

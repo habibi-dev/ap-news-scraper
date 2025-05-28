@@ -20,22 +20,21 @@ let db;
 async function initDatabase() {
     // Open database connection
     db = await open({
-        filename: './news.db',
+        filename: './music.db',
         driver: sqlite3.Database
     });
 
     // Create tables if they don't exist
     await db.exec(`
-        CREATE TABLE IF NOT EXISTS news (
+        CREATE TABLE IF NOT EXISTS music (
                                             id TEXT PRIMARY KEY,
                                             title TEXT NOT NULL,
+                                            artist TEXT NOT NULL,
                                             link TEXT NOT NULL,
-                                            source TEXT,
                                             image_url TEXT,
-                                            video_url TEXT,
-                                            content TEXT,
+                                            mp3_url TEXT,
                                             translated_title TEXT,
-                                            translated_content TEXT,
+                                            translated_artist TEXT,
                                             status TEXT DEFAULT '${StatusEnum.PENDING_REVIEW}',
                                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -46,44 +45,44 @@ async function initDatabase() {
 }
 
 /**
- * Insert a news item into the database
- * @param {Object} newsItem - The news item to insert
- * @returns {Promise<string>} - The ID of the inserted news item
+ * Insert a music item into the database
+ * @param {Object} musicItem - The music item to insert
+ * @returns {Promise<string>} - The ID of the inserted music item
  */
-async function insertNewsItem(newsItem) {
+async function insertMusicItem(musicItem) {
     // Generate unique ID based on title and link
-    const id = generateHash(newsItem.title + newsItem.link);
+    const id = generateHash(musicItem.title + musicItem.link);
 
     try {
-        // Check if news already exists
-        const existingNews = await db.get('SELECT id FROM news WHERE id = ?', id);
+        // Check if music already exists
+        const existingMusic = await db.get('SELECT id FROM music WHERE id = ?', id);
 
-        if (existingNews) {
-            console.log(`News item already exists: ${newsItem.title}`);
+        if (existingMusic) {
+            console.log(`Music item already exists: ${musicItem.title}`);
             return id;
         }
 
-        // Insert news item
+        // Insert music item
         await db.run(
-            'INSERT INTO news (id, title, link, source, status) VALUES (?, ?, ?, ?, ?)',
-            [id, newsItem.title, newsItem.link, newsItem.source || '', StatusEnum.PENDING_REVIEW]
+            'INSERT INTO music (id, title, link, artist, status) VALUES (?, ?, ?, ?, ?)',
+            [id, musicItem.title, musicItem.link, musicItem.artist, StatusEnum.PENDING_TRANSLATION]
         );
 
-        console.log(`Inserted news: ${newsItem.title}`);
+        console.log(`Inserted music: ${musicItem.title}`);
         return id;
     } catch (error) {
-        console.error('Error inserting news item:', error);
+        console.error('Error inserting music item:', error);
         throw error;
     }
 }
 
 /**
- * Update a news item in the database
- * @param {string} id - The ID of the news item to update
+ * Update a music item in the database
+ * @param {string} id - The ID of the music item to update
  * @param {Object} updates - The fields to update
  * @returns {Promise<void>}
  */
-async function updateNewsItem(id, updates) {
+async function updateMusicItem(id, updates) {
     try {
         // Create SET part of SQL query dynamically
         const fields = Object.keys(updates)
@@ -99,79 +98,79 @@ async function updateNewsItem(id, updates) {
 
         // Execute update
         await db.run(
-            `UPDATE news SET ${fields.join(', ')} WHERE id = ?`,
+            `UPDATE music SET ${fields.join(', ')} WHERE id = ?`,
             [...values, id]
         );
 
-        console.log(`Updated news item: ${id}`);
+        console.log(`Updated music item: ${id}`);
     } catch (error) {
-        console.error('Error updating news item:', error);
+        console.error('Error updating music item:', error);
         throw error;
     }
 }
 
 /**
- * Get news items by status
+ * Get music items by status
  * @param {string} status - The status to filter by
  * @param {number} limit - Maximum number of items to return
- * @returns {Promise<Array>} - Array of news items
+ * @returns {Promise<Array>} - Array of music items
  */
-async function getNewsByStatus(status, limit = 100) {
+async function getMusicByStatus(status, limit = 100) {
     try {
         return await db.all(
-            'SELECT * FROM news WHERE status = ? ORDER BY created_at DESC LIMIT ?',
+            'SELECT * FROM music WHERE status = ? ORDER BY created_at DESC LIMIT ?',
             [status, limit]
         );
     } catch (error) {
-        console.error('Error getting news by status:', error);
+        console.error('Error getting music by status:', error);
         throw error;
     }
 }
 
-async function getNewsByStatusInLast24Hours(status, limit = 100) {
+async function getMusicByStatusInLast24Hours(status, limit = 100) {
     try {
         const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         return await db.all(
-            'SELECT * FROM news WHERE status = ? AND created_at >= ? ORDER BY created_at DESC LIMIT ?',
+            'SELECT * FROM music WHERE status = ? AND created_at >= ? ORDER BY created_at DESC LIMIT ?',
             [status, oneDayAgo, limit]
         );
     } catch (error) {
-        console.error('Error getting news from last 24 hours by status:', error);
+        console.error('Error getting music from last 24 hours by status:', error);
         throw error;
     }
 }
 
 
 /**
- * Get a news item by ID
- * @param {string} id - The ID of the news item
- * @returns {Promise<Object|null>} - The news item or null if not found
+ * Get a music item by ID
+ * @param {string} id - The ID of the music item
+ * @returns {Promise<Object|null>} - The music item or null if not found
  */
-async function getNewsById(id) {
+async function getMusicById(id) {
     try {
-        return await db.get('SELECT * FROM news WHERE id = ?', id);
+        return await db.get('SELECT * FROM music WHERE id = ?', id);
     } catch (error) {
-        console.error('Error getting news by ID:', error);
+        console.error('Error getting music by ID:', error);
         throw error;
     }
 }
 
 /**
- * Update news status
- * @param {string} id - The ID of the news item
+ * Update music status
+ * @param {string} id - The ID of the music item
  * @param {string} status - The new status
  * @returns {Promise<void>}
  */
-async function updateNewsStatus(id, status) {
+async function updateMusicStatus(id, status) {
     try {
         await db.run(
-            'UPDATE news SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE music SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
             [status, id]
         );
 
-        console.log(`Updated status for news item ${id} to ${status}`);
+        console.log(`Updated status for music item ${id} to ${status}`);
     } catch (error) {
-        console.error('Error updating news status:', error);
+        console.error('Error updating music status:', error);
         throw error;
     }
 }
@@ -184,7 +183,7 @@ async function cleanupOldRecords() {
     try {
         // Get the created_at timestamp of the 10,000th record
         const result = await db.get(`
-            SELECT created_at FROM news 
+            SELECT created_at FROM music 
             ORDER BY created_at DESC 
             LIMIT 1 OFFSET 9999
         `);
@@ -197,11 +196,11 @@ async function cleanupOldRecords() {
 
         // Delete records older than the cutoff timestamp
         const { changes } = await db.run(`
-            DELETE FROM news 
+            DELETE FROM music 
             WHERE created_at < ?
         `, [result.created_at]);
 
-        console.log(`Deleted ${changes} old news records`);
+        console.log(`Deleted ${changes} old music records`);
         return changes;
     } catch (error) {
         console.error('Error cleaning up old records:', error);
@@ -211,12 +210,12 @@ async function cleanupOldRecords() {
 
 module.exports = {
     initDatabase,
-    insertNewsItem,
-    updateNewsItem,
-    getNewsByStatus,
-    getNewsById,
-    updateNewsStatus,
+    insertMusicItem,
+    updateMusicItem,
+    getMusicByStatus,
+    getMusicById,
+    updateMusicStatus,
     cleanupOldRecords,
-    getNewsByStatusInLast24Hours,
+    getMusicByStatusInLast24Hours,
     StatusEnum
 };

@@ -1,4 +1,4 @@
-# News Scraper, Translator and Publisher
+# Music Scraper, Translator and Publisher
 
 این پروژه یک سیستم کامل برای خراش داده‌های خبری، ترجمه و انتشار اخبار در کانال تلگرام است.
 
@@ -22,8 +22,8 @@
 
 1. کلون کردن مخزن
 ```bash
-git clone https://github.com/habibi-dev/ap-news-scraper.git
-cd ap-news-scraper
+git clone https://github.com/habibi-dev/ap-Music-scraper.git
+cd ap-Music-scraper
 ```
 
 2. نصب وابستگی‌ها
@@ -69,10 +69,10 @@ npm run publish
 ├── package.json              # وابستگی‌های پروژه
 ├── /services
 │   ├── scraper.js            # سرویس خراش‌گر وب
-│   ├── newsService.js        # سرویس مدیریت خبر
+│   ├── MusicService.js        # سرویس مدیریت خبر
 │   ├── telegram.js           # سرویس ارسال به تلگرام
 ├── /db
-│   ├── newsDatabase.js       # عملیات پایگاه داده
+│   ├── MusicDatabase.js       # عملیات پایگاه داده
 ├── /utils
 │   ├── helpers.js            # توابع کمکی مثل delay
 ├── /api
@@ -97,8 +97,8 @@ npm run publish
 ```bash
 #!/bin/bash
 
-# News Scraper, Translator and Publisher Automation Script
-# This script automates the process of scraping, processing, translating and publishing news
+# Music Scraper, Translator and Publisher Automation Script
+# This script automates the process of scraping, processing, translating and publishing Music
 # It runs every 10 minutes and only operates between 8 AM and midnight
 
 # Set path to project directory
@@ -174,32 +174,32 @@ run_command() {
 }
 
 # Start the process
-log_message "Starting news processing cycle"
+log_message "Starting Music processing cycle"
 
-# Step 1: Scrape news from sources
-run_command "node index.js read all" "news scraping"
+# Step 1: Scrape Music from sources
+run_command "node index.js read all" "Music scraping"
 
-# Step 2: Process pending news (analyze with Gemini AI)
-run_command "node index.js pending" "news analysis"
+# Step 2: Process pending Music (analyze with Gemini AI)
+run_command "node index.js pending" "Music analysis"
 
-# Step 3: Translate approved news
-run_command "node index.js translate" "news translation"
+# Step 3: Translate approved Music
+run_command "node index.js translate" "Music translation"
 
-# Step 4: Publish translated news to Telegram
+# Step 4: Publish translated Music to Telegram
 if is_operation_allowed; then
-    run_command "npm run publish" "news publishing"
+    run_command "npm run publish" "Music publishing"
 else
     log_message "Operation hours ended during execution. Skipping publishing."
 fi
 
 # Step 5: clear old translations
-run_command "node index.js clear" "news clear"
+run_command "node index.js clear" "Music clear"
 
-log_message "Completed news processing cycle"
+log_message "Completed Music processing cycle"
 exit 0
 ```
 
-```chmod +x news_scraper_cron.sh
-./news_scraper_cron.sh```
+```chmod +x Music_scraper_cron.sh
+./Music_scraper_cron.sh```
 
-```*/10 * * * * /path/to/news_scraper_cron.sh```
+```*/10 * * * * /path/to/Music_scraper_cron.sh```

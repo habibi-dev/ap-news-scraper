@@ -260,15 +260,15 @@ function extractValidJson(rawInput) {
 
 
 /**
- * Send news for review to Gemini
- * @param {Array} newsItems - Array of news items to review
+ * Send Music for review to Gemini
+ * @param {Array} MusicItems - Array of Music items to review
  * @returns {Promise<Object>} - Review results
  */
-async function reviewNews(newsItems) {
+async function reviewMusic(MusicItems) {
     const {GEMINI_PROMPT_REVIEW} = process.env;
     try {
         // Extract only title and ID for review
-        const reviewData = newsItems.map(item => ({
+        const reviewData = MusicItems.map(item => ({
             id: item.id,
             title: item.title
         }));
@@ -282,13 +282,13 @@ async function reviewNews(newsItems) {
         // Parse the JSON response from Gemini
         return cleanAndParseJson(result);
     } catch (error) {
-        console.error('Error reviewing news:', error);
+        console.error('Error reviewing Music:', error);
         throw error;
     }
 }
 
 /**
- * Translate a news article using Gemini
+ * Translate a Music article using Gemini
  * @param {Object} article - Article to translate
  * @returns {Promise<Object>} - Translated article
  */
@@ -299,7 +299,7 @@ async function translateArticle(article) {
         // Prepare article for translation
         const textForTranslation = JSON.stringify({
             title: article.title,
-            content: article.content
+            artist: article.artist
         }, null, 2);
 
         // Send to Gemini with translation prompt
@@ -316,6 +316,6 @@ async function translateArticle(article) {
 }
 
 module.exports = {
-    reviewNews,
+    reviewMusic,
     translateArticle
 };

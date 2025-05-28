@@ -3,13 +3,13 @@ const {delay} = require('../utils/helpers');
 const {config} = require('../config');
 
 /**
- * Extracts news information from a news website
- * @param {string} url - URL of the news website
+ * Extracts Music information from a Music website
+ * @param {string} url - URL of the Music website
  * @param {object} selectors - CSS selectors for different elements
- * @param {string} sourceName - Name of the news source
- * @returns {Promise<Array>} - Array of news items
+ * @param {string} sourceName - Name of the Music source
+ * @returns {Promise<Array>} - Array of Music items
  */
-async function scrapeNews(url, selectors = {}, sourceName = '') {
+async function scrapeMusic(url, selectors = {}, sourceName = '') {
     // Launch browser with settings from config
     const browser = await puppeteer.launch({
         headless: config.browser.headless,
@@ -61,35 +61,38 @@ async function scrapeNews(url, selectors = {}, sourceName = '') {
             await delay(30000);
         }
 
-        console.log('Page loaded, extracting news...');
+        console.log('Page loaded, extracting Music...');
 
-        // Extract all news items
-        const newsItems = await page.evaluate((selectors) => {
+        // Extract all Music items
+        const MusicItems = await page.evaluate((selectors) => {
             const items = [];
-            const newsElements = document.querySelectorAll(selectors.newsContainer);
+            const MusicElements = document.querySelectorAll(selectors.MusicContainer);
 
-            newsElements.forEach((element) => {
+            MusicElements.forEach((element) => {
                 // Extract title
                 const titleElement = element.querySelector(selectors.title);
                 const title = titleElement ? titleElement.textContent.trim() : '';
 
+                const artistElement = element.querySelector(selectors.artist);
+                const artist = artistElement ? artistElement.textContent.trim() : '';
+
                 // Extract link
                 let link = '';
-                const linkElement = selectors.link.length ? element.querySelector(selectors.link) : element;
+                const linkElement = element.querySelector(selectors.link);
                 const relativePath = linkElement ? linkElement.getAttribute('href') : '';
                 if (relativePath) link = relativePath.startsWith('http') ? relativePath : new URL(relativePath, window.location.origin).href;
 
-                if (title.length && link.length) items.push({
-                    title, link,
+                if (title.length && link.length && artist.length) items.push({
+                    title, artist, link,
                 });
             });
 
             return items;
         }, selectors);
 
-        console.log(`Extracted ${newsItems.length} news items from ${sourceName}`);
+        console.log(`Extracted ${MusicItems.length} Music items from ${sourceName}`);
 
-        return newsItems.map(news => ({...news, source: sourceName}));
+        return MusicItems.map(Music => ({...Music, source: sourceName}));
     } catch (error) {
         console.error('Error during scraping:', error);
         throw error;
@@ -99,7 +102,7 @@ async function scrapeNews(url, selectors = {}, sourceName = '') {
 }
 
 /**
- * Scrape news content from a specific article page
+ * Scrape Music content from a specific article page
  * @param {string} url - URL of the article
  * @param selectors
  * @returns {Promise<Object>} - Article content with title, image, and text
@@ -130,34 +133,18 @@ async function scrapeArticleContent(url, selectors) {
         // Wait for content to load
         await delay(5000);
 
-        // Extract article content - common patterns in news sites
-        return await page.evaluate((selectors) => {
-
-            //Remove content that is not needed
-            document.querySelectorAll(selectors.remove).forEach((element) => element.remove())
-
-            // Try to find the main article content using common selectors
-            const articleSelectors = ['article', '.article', '.story', '.story-body', '.post-content', '[itemprop="articleBody"]', '.news-content', '.article-content'];
-
-            let content = '';
-
-
+        // Extract article content - common patterns in Music sites
+        return await page.evaluate(async (selectors) =>  {
             // Find main image
-            const image_url = document.querySelector(selectors.image).getAttribute('content')
+            const image_url = document.querySelector(selectors.image).getAttribute('src')
 
-            const element = document.querySelector(selectors.text);
-            if (element) {
-                // Remove scripts, ads, and other unnecessary elements
-                const clonedElement = element.cloneNode(true);
+            document.querySelector("div.page-detail-actions > button").click()
+            await delay(500);
+            document.querySelector("div.bottom-sheet-content .bottom-sheet-menu > div:nth-child(4)").click()
+            await delay(500);
+            const mp3_url = document.querySelector(".texts div:nth-child(4) > a").getAttribute('href')
 
-                // Get just the text content
-                content = clonedElement.textContent.trim()
-                    .replace(/\s+/g, ' ')  // Replace multiple spaces with single space
-                    .replace(/\n\s*\n/g, '\n\n'); // Replace multiple newlines with double newline
-
-            }
-
-            return {image_url, content};
+            return {image_url, mp3_url};
         }, selectors);
     } catch (error) {
         console.error('Error scraping article content:', error);
@@ -168,5 +155,5 @@ async function scrapeArticleContent(url, selectors) {
 }
 
 module.exports = {
-    scrapeNews, scrapeArticleContent
+    scrapeMusic, scrapeArticleContent
 };

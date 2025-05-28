@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="news" uuid="5f5a33da-b428-48f5-a570-94ab40528d7a">
+    <data-source source="LOCAL" name="music" uuid="72c53b09-f3ea-44c3-be02-3089d7859aa3">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/news.db</jdbc-url>
+      <jdbc-url>jdbc:sqlite:E:\Projects\ap-news-scraper\music.db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
       <libraries>
         <library>

@@ -1,5 +1,5 @@
-const {initDatabase, cleanupOldRecords} = require('./db/newsDatabase');
-const {scrapeAndStoreNews, processPendingNews, processTranslationNews, publishNews} = require('./services/newsService');
+const {initDatabase, cleanupOldRecords} = require('./db/MusicDatabase');
+const {scrapeAndStoreMusic, processTranslationMusic, publishMusic} = require('./services/MusicService');
 require('dotenv').config();
 
 /**
@@ -15,37 +15,29 @@ async function main() {
 
         switch (command) {
             case 'read':
-                // Scrape all news sources and store them in database
-                const sourceName = process.argv[3];
-                await scrapeAndStoreNews(sourceName);
-                break;
-
-            case 'pending':
-                // Get pending news for review and send to Gemini
-                await processPendingNews();
+                await scrapeAndStoreMusic();
                 break;
 
             case 'translate':
-                // Process news waiting for translation
-                await processTranslationNews();
+                // Process Music waiting for translation
+                await processTranslationMusic();
                 break;
 
             case 'publish':
-                // Publish translated news to Telegram
-                await publishNews();
+                // Publish translated Music to Telegram
+                await publishMusic();
                 break;
 
             case 'clear':
-                // Publish translated news to Telegram
+                // Publish translated Music to Telegram
                 await cleanupOldRecords();
                 break;
 
             default:
                 console.log('Available commands:');
-                console.log('  read [sourceName] - Scrape news from sources');
-                console.log('  pending - Process news pending for review');
-                console.log('  translate - Process news waiting for translation');
-                console.log('  publish - Publish translated news to Telegram');
+                console.log('  read [sourceName] - Scrape Music from sources');
+                console.log('  translate - Process Music waiting for translation');
+                console.log('  publish - Publish translated Music to Telegram');
         }
     } catch (error) {
         console.error('Application error:', error);

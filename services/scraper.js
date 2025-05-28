@@ -139,13 +139,13 @@ async function scrapeArticleContent(url, selectors) {
             const image_url = document.querySelector(selectors.image).getAttribute('src')
 
             document.querySelector("div.page-detail-actions > button").click()
-            await delay(500);
+            await new Promise(resolve => setTimeout(resolve, 500));
             document.querySelector("div.bottom-sheet-content .bottom-sheet-menu > div:nth-child(4)").click()
-            await delay(500);
+            await new Promise(resolve => setTimeout(resolve, 500));
             const mp3_url = document.querySelector(".texts div:nth-child(4) > a").getAttribute('href')
 
             return {image_url, mp3_url};
-        }, selectors, delay);
+        }, selectors);
     } catch (error) {
         console.error('Error scraping article content:', error);
         throw error;

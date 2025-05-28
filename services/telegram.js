@@ -3,6 +3,153 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const ffmpeg = require('fluent-ffmpeg');
+
+// Constants for file size limits (in bytes)
+const TELEGRAM_AUDIO_LIMIT = 50 * 1024 * 1024; // 50MB
+const TELEGRAM_DOCUMENT_LIMIT = 2048 * 1024 * 1024; // 2GB
+
+/**
+ * Check file size
+ * @param {string} filePath - Path to file
+ * @returns {number} - File size in bytes
+ */
+function getFileSize(filePath) {
+    try {
+        const stats = fs.statSync(filePath);
+        return stats.size;
+    } catch (error) {
+        console.error(`Error getting file size for ${filePath}:`, error.message);
+        return 0;
+    }
+}
+
+/**
+ * Compress audio file using ffmpeg
+ * @param {string} inputPath - Input audio file path
+ * @param {string} outputPath - Output compressed audio file path
+ * @param {Object} options - Compression options
+ * @returns {Promise<string>} - Path to compressed file
+ */
+async function compressAudio(inputPath, outputPath, options = {}) {
+    return new Promise((resolve, reject) => {
+        console.log(`Compressing audio: ${inputPath} -> ${outputPath}`);
+
+        const {
+            bitrate = '128k',
+            format = 'mp3',
+            channels = 2,
+            sampleRate = 44100
+        } = options;
+
+        ffmpeg(inputPath)
+            .audioBitrate(bitrate)
+            .audioChannels(channels)
+            .audioFrequency(sampleRate)
+            .format(format)
+            .on('start', (commandLine) => {
+                console.log('FFmpeg process started:', commandLine);
+            })
+            .on('progress', (progress) => {
+                console.log(`Compression progress: ${Math.round(progress.percent || 0)}%`);
+            })
+            .on('end', () => {
+                console.log('Audio compression completed');
+                resolve(outputPath);
+            })
+            .on('error', (err) => {
+                console.error('FFmpeg compression error:', err.message);
+                reject(err);
+            })
+            .save(outputPath);
+    });
+}
+
+/**
+ * Progressive audio compression to fit size limit
+ * @param {string} inputPath - Input audio file path
+ * @param {number} targetSize - Target size in bytes
+ * @returns {Promise<string>} - Path to compressed file that fits size limit
+ */
+async function progressiveCompress(inputPath, targetSize = TELEGRAM_AUDIO_LIMIT) {
+    const tempDir = path.dirname(inputPath);
+    const baseFilename = path.parse(inputPath).name;
+
+    // Compression levels with different bitrates
+    const compressionLevels = [
+        { bitrate: '192k', suffix: '_192k' },
+        { bitrate: '128k', suffix: '_128k' },
+        { bitrate: '96k', suffix: '_96k' }
+    ];
+
+    for (const level of compressionLevels) {
+        const outputPath = path.join(tempDir, `${baseFilename}${level.suffix}.mp3`);
+
+        try {
+            await compressAudio(inputPath, outputPath, {
+                bitrate: level.bitrate,
+                format: 'mp3'
+            });
+
+            const compressedSize = getFileSize(outputPath);
+            console.log(`Compressed to ${level.bitrate}: ${(compressedSize / 1024 / 1024).toFixed(2)}MB`);
+
+            if (compressedSize <= targetSize) {
+                console.log(`Successfully compressed to fit size limit with bitrate ${level.bitrate}`);
+                return outputPath;
+            } else {
+                // Delete this version and try next compression level
+                deleteFile(outputPath);
+            }
+        } catch (error) {
+            console.error(`Compression failed at ${level.bitrate}:`, error.message);
+            continue;
+        }
+    }
+
+    throw new Error('Unable to compress audio to fit within size limit');
+}
+
+/**
+ * Send audio as document if too large for audio
+ * @param {string} audioPath - Path to audio file
+ * @param {Object} audioOptions - Audio metadata options
+ * @returns {Promise<Object>} - Telegram API response
+ */
+async function sendTelegramDocument(audioPath, audioOptions = {}) {
+    const {TELEGRAM_BOT_TOKEN, TARGET_CHANNEL_ID} = process.env;
+    const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, {polling: false});
+
+    try {
+        const fileSize = getFileSize(audioPath);
+        const filename = path.basename(audioPath);
+
+        const caption = `🎵 <b>${audioOptions.title || 'Audio File'}</b>\n` +
+            `🎙️ ${audioOptions.performer || 'Unknown Artist'}\n` +
+            `📁 Size: ${(fileSize / 1024 / 1024).toFixed(2)}MB\n` +
+            `📎 Sent as document due to size limit`;
+
+        const result = await bot.sendDocument(
+            TARGET_CHANNEL_ID,
+            audioPath,
+            {
+                caption: caption,
+                parse_mode: 'HTML'
+            },
+            {
+                filename: filename,
+                contentType: 'audio/mpeg'
+            }
+        );
+
+        console.log("Audio sent as document successfully");
+        return result;
+
+    } catch (error) {
+        console.error('Error sending audio as document:', error.message);
+        throw error;
+    }
+}
 
 /**
  * Download file from URL to local filesystem
@@ -27,7 +174,7 @@ async function downloadFile(url, filename) {
             method: 'GET',
             url: url,
             responseType: 'stream',
-            timeout: 30000,
+            timeout: 60000, // Increased timeout for large files
             maxRedirects: 5,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -39,7 +186,8 @@ async function downloadFile(url, filename) {
 
         return new Promise((resolve, reject) => {
             writer.on('finish', () => {
-                console.log(`File downloaded successfully: ${filePath}`);
+                const fileSize = getFileSize(filePath);
+                console.log(`File downloaded successfully: ${filePath} (${(fileSize / 1024 / 1024).toFixed(2)}MB)`);
                 resolve(filePath);
             });
             writer.on('error', reject);
@@ -127,7 +275,7 @@ async function sendTelegramPhoto(imageUrl, caption) {
 }
 
 /**
- * Send audio file to Telegram channel
+ * Enhanced send audio file to Telegram channel with compression support
  * @param {string} audioUrl - URL of the audio file to send
  * @param {Object} audioOptions - Audio metadata options
  * @returns {Promise<Object>} - Telegram API response
@@ -137,6 +285,7 @@ async function sendTelegramAudio(audioUrl, audioOptions = {}) {
     const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, {polling: false});
 
     let localAudioPath = null;
+    let compressedAudioPath = null;
     let localThumbPath = null;
 
     try {
@@ -147,6 +296,9 @@ async function sendTelegramAudio(audioUrl, audioOptions = {}) {
 
         // Download audio file
         localAudioPath = await downloadFile(audioUrl, audioFilename);
+        const originalSize = getFileSize(localAudioPath);
+
+        console.log(`Original audio size: ${(originalSize / 1024 / 1024).toFixed(2)}MB`);
 
         const options = {
             parse_mode: 'HTML',
@@ -168,9 +320,47 @@ async function sendTelegramAudio(audioUrl, audioOptions = {}) {
             }
         }
 
-        const result = await bot.sendAudio(TARGET_CHANNEL_ID, localAudioPath, options);
-        console.log("Audio sent successfully");
-        return result;
+        let audioToSend = localAudioPath;
+
+        // Check if file is too large for audio and needs compression
+        if (originalSize > TELEGRAM_AUDIO_LIMIT) {
+            console.log(`Audio file too large (${(originalSize / 1024 / 1024).toFixed(2)}MB), attempting compression...`);
+
+            try {
+                compressedAudioPath = await progressiveCompress(localAudioPath, TELEGRAM_AUDIO_LIMIT);
+                audioToSend = compressedAudioPath;
+
+                const compressedSize = getFileSize(compressedAudioPath);
+                console.log(`Compressed size: ${(compressedSize / 1024 / 1024).toFixed(2)}MB`);
+
+            } catch (compressionError) {
+                console.log('Compression failed, trying to send as document:', compressionError.message);
+
+                // If compression fails and file is within document limit, send as document
+                if (originalSize <= TELEGRAM_DOCUMENT_LIMIT) {
+                    return await sendTelegramDocument(localAudioPath, audioOptions);
+                } else {
+                    throw new Error(`File too large (${(originalSize / 1024 / 1024).toFixed(2)}MB) for both audio and document limits`);
+                }
+            }
+        }
+
+        // Try to send as audio
+        try {
+            const result = await bot.sendAudio(TARGET_CHANNEL_ID, audioToSend, options);
+            console.log("Audio sent successfully");
+            return result;
+        } catch (audioError) {
+            console.log('Failed to send as audio, trying as document:', audioError.message);
+
+            // Fallback to document if audio sending fails
+            const currentSize = getFileSize(audioToSend);
+            if (currentSize <= TELEGRAM_DOCUMENT_LIMIT) {
+                return await sendTelegramDocument(audioToSend, audioOptions);
+            } else {
+                throw audioError;
+            }
+        }
 
     } catch (error) {
         console.error('Error sending Telegram audio:', error.message);
@@ -179,6 +369,9 @@ async function sendTelegramAudio(audioUrl, audioOptions = {}) {
         // Clean up downloaded files
         if (localAudioPath) {
             deleteFile(localAudioPath);
+        }
+        if (compressedAudioPath && compressedAudioPath !== localAudioPath) {
+            deleteFile(compressedAudioPath);
         }
         if (localThumbPath) {
             deleteFile(localThumbPath);
@@ -234,7 +427,7 @@ async function publishMusicToTelegram(music) {
             }
         }
 
-        // Step 2: Send audio file
+        // Step 2: Send audio file with enhanced handling
         if (music.mp3_url) {
             try {
                 const audioOptions = {
@@ -302,6 +495,9 @@ module.exports = {
     sendTelegramPhoto,
     sendTelegramAudio,
     sendTelegramMessage,
+    sendTelegramDocument,
     downloadFile,
+    compressAudio,
+    progressiveCompress,
     cleanupTempDirectory
 };

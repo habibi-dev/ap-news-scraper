@@ -145,7 +145,7 @@ async function publishMusic() {
                 await publishMusicToTelegram(Music);
 
                 // Update status to published
-             //   await updateMusicStatus(Music.id, StatusEnum.PUBLISHED);
+                await updateMusicStatus(Music.id, StatusEnum.PUBLISHED);
 
                 console.log(`Successfully published ${Music.id}`);
 

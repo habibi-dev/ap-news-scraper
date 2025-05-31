@@ -2,12 +2,12 @@ const config = {
     // Music sources with their selectors
     sources: {
         "MrTehran": {
-            url: "https://mrtehran.app/browse/latest",
+            url: "https://mrtehran.app/",
             selectors: {
-                MusicContainer: 'div.track-line-container > .track-line',
-                title: '.title a',
-                artist: '.artist',
-                link: '.title a',
+                MusicContainer: 'div.carousel-container > div.track-box',
+                title: '.text1 a',
+                artist: '.text2',
+                link: '.box > a',
                 image: '.thumbail img',
             }
         },

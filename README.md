@@ -1,98 +1,99 @@
 # News Scraper, Translator and Publisher
 
-این پروژه یک سیستم کامل برای خراش داده‌های خبری، ترجمه و انتشار اخبار در کانال تلگرام است.
+This project is a complete system for scraping news data, translating, and publishing news to Telegram channels.
 
-## ویژگی‌ها
+## Features
 
-- خراش داده‌های خبری از منابع متعدد خبری جهانی
-- ذخیره‌سازی اخبار در پایگاه داده SQLite
-- بررسی و فیلتر کردن اخبار با استفاده از Gemini AI
-- استخراج محتوای کامل خبر و تصاویر
-- ترجمه اخبار با استفاده از Gemini AI
-- انتشار اخبار ترجمه شده در کانال تلگرام
-- مدیریت وضعیت‌های مختلف خبر (در انتظار بررسی، در انتظار ترجمه، ترجمه شده، منتشر شده)
+- Scraping news data from multiple global news sources
+- Storing news in SQLite database
+- Reviewing and filtering news using Gemini AI
+- Extracting complete news content and images
+- Translating news using Gemini AI
+- Publishing translated news to Telegram channels
+- Managing different news states (pending review, pending translation, translated, published)
 
-## پیش‌نیازها
+## Prerequisites
 
-- Node.js (نسخه 14 یا بالاتر)
-- کلید API جمنای
-- توکن ربات تلگرام
+- Node.js (version 14 or higher)
+- Gemini API key
+- Telegram bot token
 
-## نصب
+## Installation
 
-1. کلون کردن مخزن
+1. Clone the repository
 ```bash
 git clone https://github.com/habibi-dev/ap-news-scraper.git
 cd ap-news-scraper
 ```
 
-2. نصب وابستگی‌ها
+2. Install dependencies
 ```bash
 npm install
 ```
 
-3. تنظیم پیکربندی در فایل `config.js`
-    - وارد کردن کلید API جمنای
-    - وارد کردن توکن ربات تلگرام و شناسه کانال
-    - تنظیم پرامپت‌های ترجمه و بررسی
+3. Configure settings in `config.js` file
+    - Enter Gemini API key
+    - Enter Telegram bot token and channel ID
+    - Set translation and review prompts
 
-## نحوه استفاده
+## Usage
 
-### خراش داده‌های خبری
+### Scraping News Data
 ```bash
 npm run read
-# یا برای منبع خاص
+# or for specific source
 node index.js scrape bbc
 ```
 
-### پردازش اخبار در انتظار بررسی
+### Process Pending News
 ```bash
 npm run pending
 ```
 
-### ترجمه اخبار
+### Translate News
 ```bash
 npm run translate
 ```
 
-### انتشار اخبار ترجمه شده
+### Publish Translated News
 ```bash
 npm run publish
 ```
 
-## ساختار پروژه
+## Project Structure
 
 ```
 /project
-├── index.js                  # فایل اصلی برای اجرای برنامه
-├── config.js                 # تنظیمات برنامه
-├── package.json              # وابستگی‌های پروژه
+├── index.js                  # Main file for running the application
+├── config.js                 # Application settings
+├── package.json              # Project dependencies
 ├── /services
-│   ├── scraper.js            # سرویس خراش‌گر وب
-│   ├── newsService.js        # سرویس مدیریت خبر
-│   ├── telegram.js           # سرویس ارسال به تلگرام
+│   ├── scraper.js            # Web scraper service
+│   ├── newsService.js        # News management service
+│   ├── telegram.js           # Telegram sending service
 ├── /db
-│   ├── newsDatabase.js       # عملیات پایگاه داده
+│   ├── newsDatabase.js       # Database operations
 ├── /utils
-│   ├── helpers.js            # توابع کمکی مثل delay
+│   ├── helpers.js            # Helper functions like delay
 ├── /api
-│   ├── geminiApi.js          # ارتباط با API جمنای
+│   ├── geminiApi.js          # Gemini API communication
 ```
 
-## فرایند کلی
+## Overall Process
 
-1. **خراش داده**: اخبار از منابع مختلف جمع‌آوری و در پایگاه داده ذخیره می‌شوند.
-2. **بررسی**: عناوین خبری به جمنای ارسال می‌شوند تا مناسب بودن آنها برای ترجمه بررسی شود.
-3. **استخراج محتوا**: محتوای کامل خبرهای تأیید شده استخراج می‌شود.
-4. **ترجمه**: محتوای کامل خبر به جمنای ارسال می‌شود تا ترجمه شود.
-5. **انتشار**: اخبار ترجمه شده در کانال تلگرام منتشر می‌شوند.
+1. **Scraping**: News is collected from various sources and stored in the database.
+2. **Review**: News headlines are sent to Gemini to check their suitability for translation.
+3. **Content Extraction**: Complete content of approved news is extracted.
+4. **Translation**: Complete news content is sent to Gemini for translation.
+5. **Publishing**: Translated news is published to Telegram channels.
 
-## نکات
+## Notes
 
-- در فایل `config.js` می‌توانید انتخاب‌گرهای CSS را برای منابع مختلف خبری تنظیم کنید.
-- پرامپت‌های جمنای باید به گونه‌ای تنظیم شوند که خروجی JSON با فرمت مناسب تولید کنند.
-- برخی سایت‌های خبری دارای محافظت CloudFlare هستند که ممکن است نیاز به تنظیمات بیشتری داشته باشند.
+- In the `config.js` file, you can set CSS selectors for different news sources.
+- Gemini prompts should be configured to produce JSON output in the appropriate format.
+- Some news websites have CloudFlare protection which may require additional configurations.
 
+## Automation Script
 
 ```bash
 #!/bin/bash
@@ -121,7 +122,6 @@ if [ -f "$HOME/.nvm/nvm.sh" ]; then
     # nvm use default > /dev/null 2>&1
 fi
 
-
 # Create logs directory if it doesn't exist
 mkdir -p "logs"
 
@@ -146,7 +146,6 @@ if ! is_operation_allowed; then
     log_message "Outside operation hours (8:00-24:00). Skipping execution."
     exit 0
 fi
-
 
 # Function to run a command and log its output
 run_command() {
@@ -192,14 +191,26 @@ else
     log_message "Operation hours ended during execution. Skipping publishing."
 fi
 
-# Step 5: clear old translations
+# Step 5: Clear old translations
 run_command "node index.js clear" "news clear"
 
 log_message "Completed news processing cycle"
 exit 0
 ```
 
-```chmod +x news_scraper_cron.sh
-./news_scraper_cron.sh```
+### Setting up the automation script:
 
-```*/10 * * * * /path/to/news_scraper_cron.sh```
+1. Make the script executable:
+```bash
+chmod +x news_scraper_cron.sh
+./news_scraper_cron.sh
+```
+
+2. Add to crontab to run every 10 minutes:
+```bash
+*/10 * * * * /path/to/news_scraper_cron.sh
+```
+
+## Operation Schedule
+
+The system operates between 8:00 AM and 12:00 AM (midnight) Tehran time. Outside these hours, the script will skip execution to avoid unnecessary operations during low-activity periods.
